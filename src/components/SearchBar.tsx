@@ -1,21 +1,22 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { searchProducts } from '../services/productService';
 import { Product } from '../types/product';
+import LoadingSpinner from './LoadingSpinner';
 import './SearchBar.css';
 
 const SearchBar: React.FC = () => {
   const [query, setQuery] = useState('');
   const [suggestions, setSuggestions] = useState<Product[]>([]);
-  const [showDropdown, setShowDropdown] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const searchBarRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (searchBarRef.current && !searchBarRef.current.contains(event.target as Node)) {
-        setShowDropdown(false);
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
       }
     };
 
@@ -23,88 +24,96 @@ const SearchBar: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  useEffect(() => {
-    const loadSuggestions = async () => {
-      if (query.length < 2) {
-        setSuggestions([]);
-        return;
-      }
+  const loadSuggestions = async (searchQuery: string) => {
+    if (!searchQuery.trim()) {
+      setSuggestions([]);
+      return;
+    }
 
-      try {
-        const cosplayResults = await searchProducts(query, 'cosplay', 1);
-        const beautyResults = await searchProducts(query, 'beauty', 1);
-        const allResults = [...cosplayResults.products, ...beautyResults.products];
-        
-        // Sort by relevance and limit to 8 results
-        const sortedResults = allResults
-          .sort((a, b) => b.rating - a.rating)
-          .slice(0, 8);
-        
-        setSuggestions(sortedResults);
-      } catch (error) {
-        console.error('Error loading suggestions:', error);
-      }
-    };
-
-    const debounceTimer = setTimeout(loadSuggestions, 300);
-    return () => clearTimeout(debounceTimer);
-  }, [query]);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (query.trim()) {
-      navigate(`/search?q=${encodeURIComponent(query.trim())}`);
-      setShowDropdown(false);
+    try {
+      setLoading(true);
+      const results = await searchProducts(searchQuery);
+      setSuggestions(results);
+    } catch (error) {
+      console.error('Error loading suggestions:', error);
+      setSuggestions([]);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleSuggestionClick = (productId: string) => {
-    navigate(`/product/${productId}`);
-    setShowDropdown(false);
-    setQuery('');
+  const handleSearch = (searchQuery: string = query) => {
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      setShowSuggestions(false);
+      setQuery('');
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setQuery(value);
+    setShowSuggestions(true);
+    loadSuggestions(value);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
   };
 
   return (
-    <div className="search-bar-container" ref={searchBarRef}>
-      <form onSubmit={handleSubmit} className="search-form">
+    <div className="search-container" ref={searchRef}>
+      <div className="search-input-container">
         <input
           type="text"
-          value={query}
-          onChange={(e) => {
-            setQuery(e.target.value);
-            setShowDropdown(true);
-          }}
           placeholder="Search products..."
+          value={query}
+          onChange={handleInputChange}
+          onKeyDown={handleKeyDown}
           className="search-input"
         />
-        <button type="submit" className="search-button">
+        <button onClick={() => handleSearch()} className="search-button">
           Search
         </button>
-      </form>
-
-      {showDropdown && suggestions.length > 0 && (
-        <div className="search-suggestions" ref={dropdownRef}>
-          {suggestions.map((product) => (
-            <div
-              key={product.id}
-              className="suggestion-item"
-              onClick={() => handleSuggestionClick(product.id)}
-            >
-              <img 
-                src={product.images[0]} 
-                alt={product.title} 
-                className="suggestion-image"
-              />
-              <div className="suggestion-details">
-                <span className="suggestion-title">{product.title}</span>
-                <span className="suggestion-price">${product.price.toFixed(2)}</span>
-              </div>
+      </div>
+      
+      {showSuggestions && query.trim() !== '' && (
+        <div className="suggestions-container">
+          {loading ? (
+            <div className="suggestion-item loading">
+              <LoadingSpinner size="small" />
             </div>
-          ))}
+          ) : suggestions.length > 0 ? (
+            suggestions.map((product) => (
+              <div
+                key={product.id}
+                className="suggestion-item"
+                onClick={() => {
+                  navigate(`/product/${product.id}`);
+                  setShowSuggestions(false);
+                  setQuery('');
+                }}
+              >
+                <img 
+                  src={Object.values(product.images)[0]} 
+                  alt={product.title} 
+                  className="suggestion-image"
+                />
+                <div className="suggestion-info">
+                  <span className="suggestion-title">{product.title}</span>
+                  <span className="suggestion-price">${product.price.toFixed(2)}</span>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="suggestion-item no-results">No products found</div>
+          )}
         </div>
       )}
     </div>
   );
 };
 
-export default SearchBar; 
+export default SearchBar;

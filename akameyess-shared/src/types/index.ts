@@ -15,8 +15,9 @@ export interface Product {
   updated_at?: string;
 }
 
-export interface ProductsResponse {
-  products: Product[];
-  totalCount: number;
-  totalPages: number;
+export interface User {
+  uid: string;
+  email: string | null;
+  displayName: string | null;
+  photoURL: string | null;
 } 

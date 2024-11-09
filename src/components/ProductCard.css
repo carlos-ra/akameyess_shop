@@ -74,8 +74,17 @@
 
 .product-info {
   padding: 1.5rem;
-  transform: translateY(0);
-  transition: transform var(--transition-speed) ease;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.product-details {
+  cursor: pointer;
+}
+
+.product-details:hover h3 {
+  color: var(--primary-color);
 }
 
 .product-card:hover .product-info {

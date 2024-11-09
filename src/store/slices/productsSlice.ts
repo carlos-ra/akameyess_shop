@@ -4,6 +4,8 @@ import { getFeaturedProducts, getProductsByCategory, getProductById } from '../.
 
 interface ProductsState {
   featured: Product[];
+  beautyProducts: Product[];
+  cosplayProducts: Product[];
   categoryProducts: Product[];
   currentProduct: Product | null;
   loading: boolean;
@@ -13,6 +15,8 @@ interface ProductsState {
 
 const initialState: ProductsState = {
   featured: [],
+  beautyProducts: [],
+  cosplayProducts: [],
   categoryProducts: [],
   currentProduct: null,
   loading: false,
@@ -41,6 +45,22 @@ export const fetchProductById = createAsyncThunk(
   async (id: string) => {
     const product = await getProductById(id);
     return product;
+  }
+);
+
+export const fetchBeautyProducts = createAsyncThunk(
+  'products/fetchBeauty',
+  async () => {
+    const response = await getProductsByCategory('beauty', 1);
+    return response.products;
+  }
+);
+
+export const fetchCosplayProducts = createAsyncThunk(
+  'products/fetchCosplay',
+  async () => {
+    const response = await getProductsByCategory('cosplay', 1);
+    return response.products;
   }
 );
 
@@ -93,6 +113,28 @@ const productsSlice = createSlice({
       .addCase(fetchProductById.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || 'Failed to fetch product';
+      })
+      .addCase(fetchBeautyProducts.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(fetchBeautyProducts.fulfilled, (state, action) => {
+        state.beautyProducts = action.payload;
+        state.loading = false;
+      })
+      .addCase(fetchBeautyProducts.rejected, (state, action) => {
+        state.error = action.error.message || 'Failed to fetch beauty products';
+        state.loading = false;
+      })
+      .addCase(fetchCosplayProducts.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(fetchCosplayProducts.fulfilled, (state, action) => {
+        state.cosplayProducts = action.payload;
+        state.loading = false;
+      })
+      .addCase(fetchCosplayProducts.rejected, (state, action) => {
+        state.error = action.error.message || 'Failed to fetch cosplay products';
+        state.loading = false;
       });
   },
 });

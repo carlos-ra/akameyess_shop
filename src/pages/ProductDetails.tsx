@@ -1,84 +1,93 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { CartButton } from '../components/CartButton';
+import LoadingSpinner from '../components/LoadingSpinner';
 import { getProductById } from '../services/productService';
 import { Product } from '../types/product';
-import LoadingSpinner from '../components/LoadingSpinner';
 import './ProductDetails.css';
 
 const ProductDetails: React.FC = () => {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const [product, setProduct] = useState<Product | null>(null);
-  const [selectedImage, setSelectedImage] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [selectedImage, setSelectedImage] = useState<string>('');
 
   useEffect(() => {
-    const loadProduct = async () => {
+    const fetchProduct = async () => {
       try {
-        setIsLoading(true);
-        const data = await getProductById(id!);
-        setProduct(data);
-      } catch (err) {
-        setError('Failed to load product details');
-        console.error('Error loading product:', err);
+        if (id) {
+          const productData = await getProductById(id);
+          setProduct(productData);
+          const firstImage = Object.values(productData.images)[0];
+          setSelectedImage(firstImage);
+        }
+      } catch (error) {
+        console.error('Error fetching product:', error);
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     };
 
-    loadProduct();
+    fetchProduct();
   }, [id]);
 
-  const handleAskForProduct = () => {
-    if (product) {
-      const message = encodeURIComponent(`I'm interested in ${product.title}`);
-      const instagramUrl = `https://ig.me/m/akameyess?text=${message}`;
-      window.open(instagramUrl, '_blank');
-    }
+  const handleContactClick = () => {
+    // Instagram DM link
+    const instagramUsername = 'akameyess';
+    const message = `Hi! I'm interested in ${product?.title}`;
+    const encodedMessage = encodeURIComponent(message);
+    const instagramUrl = `https://ig.me/m/${instagramUsername}?text=${encodedMessage}`;
+    window.open(instagramUrl, '_blank');
   };
 
-  if (isLoading) return <LoadingSpinner />;
-  if (error) return <div className="error-message">{error}</div>;
-  if (!product) return <div className="error-message">Product not found</div>;
+  if (loading) return <LoadingSpinner />;
+  if (!product) return <div>Product not found</div>;
+
+  const imageArray = Object.values(product.images);
 
   return (
     <div className="product-details">
-      <div className="product-gallery">
+      <div className="product-images">
         <div className="main-image">
-          <img src={product.images[selectedImage]} alt={product.title} />
+          <img src={selectedImage} alt={product.title} />
         </div>
-        <div className="thumbnail-list">
-          {product.images.map((image, index) => (
+        <div className="thumbnail-images">
+          {imageArray.map((image, index) => (
             <img
               key={index}
               src={image}
-              alt={`${product.title} ${index + 1}`}
-              className={selectedImage === index ? 'active' : ''}
-              onClick={() => setSelectedImage(index)}
+              alt={`${product.title} thumbnail ${index + 1}`}
+              className={selectedImage === image ? 'selected' : ''}
+              onClick={() => setSelectedImage(image)}
             />
           ))}
         </div>
       </div>
-      
-      <div className="product-info-detailed">
+      <div className="product-info">
         <h1>{product.title}</h1>
-        <div className="rating-reviews">
-          <span className="rating">★ {product.rating}</span>
-          <span className="reviews">({product.reviews} reviews)</span>
-        </div>
-        <div className="price-section">
+        <div className="price-rating">
           <span className="price">${product.price.toFixed(2)}</span>
+          <span className="rating">★ {product.rating} ({product.reviews} reviews)</span>
+        </div>
+        <div className="stock-info">
+          <span className={`stock-status ${product.stock > 0 ? 'in-stock' : 'out-of-stock'}`}>
+            {product.stock > 0 ? 'In Stock' : 'Out of Stock'}
+          </span>
+          <span className="stock-quantity">
+            {product.stock > 0 ? `${product.stock} units available` : ''}
+          </span>
         </div>
         <p className="description">{product.description}</p>
+        <CartButton product={product} />
         <button 
-          onClick={handleAskForProduct}
-          className="buy-button"
+          onClick={handleContactClick}
+          className="contact-button"
         >
-          Ask for this product
+          Contact on Instagram
         </button>
       </div>
     </div>
   );
 };
 
-export default ProductDetails; 
+export default ProductDetails;

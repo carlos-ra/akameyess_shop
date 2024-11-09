@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { Product } from '../../types/product';
+import { Product } from '../types/product';
 
 interface CartItem extends Product {
   quantity: number;
@@ -8,11 +8,13 @@ interface CartItem extends Product {
 interface CartState {
   items: CartItem[];
   total: number;
+  isOpen: boolean;
 }
 
 const initialState: CartState = {
   items: [],
   total: 0,
+  isOpen: false,
 };
 
 const cartSlice = createSlice({
@@ -43,8 +45,11 @@ const cartSlice = createSlice({
       state.items = [];
       state.total = 0;
     },
+    toggleCart: (state) => {
+      state.isOpen = !state.isOpen;
+    },
   },
 });
 
-export const { addToCart, removeFromCart, updateQuantity, clearCart } = cartSlice.actions;
+export const { addToCart, removeFromCart, updateQuantity, clearCart, toggleCart } = cartSlice.actions;
 export default cartSlice.reducer; 

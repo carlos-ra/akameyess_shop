@@ -1,6 +1,6 @@
 import { useRef } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
-import { PresentationControls, Environment, Float } from '@react-three/drei'
+import { useGLTF, PresentationControls, Environment, Float } from '@react-three/drei'
 import * as THREE from 'three'
 
 function Model() {

@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { 
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword,
@@ -6,11 +6,12 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
   updateProfile,
-  User as FirebaseUser
+  AuthError,
+  User
 } from 'firebase/auth';
 import { auth } from '../../config/firebase';
 
-interface UserState {
+interface AuthState {
   user: {
     uid: string;
     email: string | null;
@@ -21,14 +22,14 @@ interface UserState {
   error: string | null;
 }
 
-const initialState: UserState = {
+const initialState: AuthState = {
   user: null,
   loading: false,
   error: null,
 };
 
 export const registerUser = createAsyncThunk(
-  'user/register',
+  'auth/register',
   async ({ email, password, displayName }: { 
     email: string; 
     password: string;
@@ -40,17 +41,18 @@ export const registerUser = createAsyncThunk(
       return {
         uid: userCredential.user.uid,
         email: userCredential.user.email,
-        displayName: displayName,
+        displayName,
         photoURL: userCredential.user.photoURL,
       };
-    } catch (error: any) {
-      return rejectWithValue(error.message);
+    } catch (error) {
+      const authError = error as AuthError;
+      return rejectWithValue(authError.message);
     }
   }
 );
 
 export const loginUser = createAsyncThunk(
-  'user/login',
+  'auth/login',
   async ({ email, password }: { email: string; password: string }, { rejectWithValue }) => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
@@ -60,14 +62,15 @@ export const loginUser = createAsyncThunk(
         displayName: userCredential.user.displayName,
         photoURL: userCredential.user.photoURL,
       };
-    } catch (error: any) {
-      return rejectWithValue(error.message);
+    } catch (error) {
+      const authError = error as AuthError;
+      return rejectWithValue(authError.message);
     }
   }
 );
 
 export const signInWithGoogle = createAsyncThunk(
-  'user/googleSignIn',
+  'auth/googleSignIn',
   async (_, { rejectWithValue }) => {
     try {
       const provider = new GoogleAuthProvider();
@@ -78,28 +81,30 @@ export const signInWithGoogle = createAsyncThunk(
         displayName: userCredential.user.displayName,
         photoURL: userCredential.user.photoURL,
       };
-    } catch (error: any) {
-      return rejectWithValue(error.message);
+    } catch (error) {
+      const authError = error as AuthError;
+      return rejectWithValue(authError.message);
     }
   }
 );
 
 export const signOut = createAsyncThunk(
-  'user/signOut',
+  'auth/signOut',
   async (_, { rejectWithValue }) => {
     try {
       await firebaseSignOut(auth);
-    } catch (error: any) {
-      return rejectWithValue(error.message);
+    } catch (error) {
+      const authError = error as AuthError;
+      return rejectWithValue(authError.message);
     }
   }
 );
 
-const userSlice = createSlice({
-  name: 'user',
+const authSlice = createSlice({
+  name: 'auth',
   initialState,
   reducers: {
-    setUser: (state, action) => {
+    setUser: (state, action: PayloadAction<AuthState['user']>) => {
       state.user = action.payload;
       state.loading = false;
       state.error = null;
@@ -110,7 +115,6 @@ const userSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // Register
       .addCase(registerUser.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -123,7 +127,6 @@ const userSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       })
-      // Login
       .addCase(loginUser.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -136,7 +139,6 @@ const userSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       })
-      // Google Sign In
       .addCase(signInWithGoogle.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -149,12 +151,11 @@ const userSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       })
-      // Sign Out
       .addCase(signOut.fulfilled, (state) => {
         state.user = null;
       });
   },
 });
 
-export const { setUser, clearError } = userSlice.actions;
-export default userSlice.reducer; 
+export const { setUser, clearError } = authSlice.actions;
+export default authSlice.reducer; 

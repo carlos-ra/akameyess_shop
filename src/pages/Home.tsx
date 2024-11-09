@@ -5,16 +5,27 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import Carousel from '../components/Carousel';
 import SplineModel from '../components/SplineModel';
 import { useAppDispatch, useAppSelector } from '../hooks/redux';
-import { fetchFeaturedProducts } from '../store/slices/productsSlice';
-import { Product } from '../types/product';
+import { 
+  fetchFeaturedProducts, 
+  fetchBeautyProducts, 
+  fetchCosplayProducts 
+} from '../store/slices/productsSlice';
 import './Home.css';
 
 const Home: React.FC = () => {
   const dispatch = useAppDispatch();
-  const { featured, loading, error } = useAppSelector(state => state.products);
+  const { 
+    featured = [], 
+    beautyProducts = [], 
+    cosplayProducts = [], 
+    loading = false, 
+    error = null 
+  } = useAppSelector((state) => state.products) || {};
 
   useEffect(() => {
     dispatch(fetchFeaturedProducts());
+    dispatch(fetchBeautyProducts());
+    dispatch(fetchCosplayProducts());
   }, [dispatch]);
 
   return (
@@ -66,7 +77,7 @@ const Home: React.FC = () => {
           <section className="featured-products">
             <h2>Featured Products</h2>
             <div className="products-grid">
-              {featured.map(product => (
+              {featured.map((product: Product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
             </div>

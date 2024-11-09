@@ -2,7 +2,6 @@ import React, { useEffect, useRef } from 'react';
 import '@splinetool/runtime';
 
 declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace JSX {
     interface IntrinsicElements {
       'spline-viewer': {
