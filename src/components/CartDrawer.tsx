@@ -8,6 +8,16 @@ export const CartDrawer: React.FC = () => {
   const { items, total, isOpen, currentOrderId } = useAppSelector(state => state.cart);
   const { user } = useAppSelector(state => state.auth);
 
+  const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    // Only close if clicking the overlay itself, not its children
+    if (e.target === e.currentTarget) {
+      dispatch(toggleCart());
+    }
+  };
+
+  if (!isOpen) return null;
+  if (!user) return null;
+
   const handleQuantityChange = async (productId: string, newQuantity: number, price: number) => {
     if (!user || !currentOrderId) return;
 
@@ -18,55 +28,20 @@ export const CartDrawer: React.FC = () => {
         dispatch(updateQuantity({ id: productId, quantity: newQuantity }));
       }
 
-      await dispatch(syncCartItem({
-        userId: user.uid,
-        productId,
+      await dispatch(syncCartItem({ 
+        userId: user.uid, 
+        productId, 
         quantity: newQuantity,
         orderId: currentOrderId,
         price
       })).unwrap();
     } catch (error) {
       console.error('Error updating cart:', error);
-      // Revert local state if server update fails
-      const originalItem = items.find(item => item.id === productId);
-      if (originalItem) {
-        dispatch(updateQuantity({ 
-          id: productId, 
-          quantity: originalItem.quantity 
-        }));
-      }
     }
   };
-
-  const handleRemoveItem = async (productId: string, price: number) => {
-    if (!user || !currentOrderId) return;
-
-    try {
-      dispatch(removeFromCart(productId));
-      await dispatch(syncCartItem({
-        userId: user.uid,
-        productId,
-        quantity: 0,
-        orderId: currentOrderId,
-        price
-      })).unwrap();
-    } catch (error) {
-      console.error('Error removing item:', error);
-      // Revert local state if server update fails
-      const originalItem = items.find(item => item.id === productId);
-      if (originalItem) {
-        dispatch(updateQuantity({ 
-          id: productId, 
-          quantity: originalItem.quantity 
-        }));
-      }
-    }
-  };
-
-  if (!isOpen) return null;
 
   return (
-    <div className="cart-drawer-overlay">
+    <div className="cart-drawer-overlay" onClick={handleOverlayClick}>
       <div className="cart-drawer">
         <div className="cart-header">
           <h3>Shopping Cart</h3>
@@ -104,7 +79,7 @@ export const CartDrawer: React.FC = () => {
                   </div>
                 </div>
                 <button 
-                  onClick={() => handleRemoveItem(item.id, item.price)}
+                  onClick={() => handleQuantityChange(item.id, 0, item.price)}
                   className="remove-button"
                 >
                   Remove
