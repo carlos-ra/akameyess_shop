@@ -1,15 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import { 
-  createUserWithEmailAndPassword, 
-  signInWithEmailAndPassword,
-  signOut as firebaseSignOut,
-  GoogleAuthProvider,
-  signInWithPopup,
-  updateProfile,
-  AuthError,
-  User
-} from 'firebase/auth';
-import { auth } from '../../config/firebase';
+import { AuthError } from '@supabase/supabase-js';
+import { supabase } from '../../config/supabase';
 
 interface AuthState {
   user: {
@@ -36,17 +27,34 @@ export const registerUser = createAsyncThunk(
     displayName: string;
   }, { rejectWithValue }) => {
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      await updateProfile(userCredential.user, { displayName });
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            display_name: displayName
+          }
+        }
+      });
+
+      if (error) {
+        if (error.message.includes('email_address_not_authorized')) {
+          throw new Error('This email domain is not authorized. Please use a valid email address.');
+        }
+        throw error;
+      }
+
       return {
-        uid: userCredential.user.uid,
-        email: userCredential.user.email,
+        uid: data.user!.id,
+        email: data.user!.email || null,
         displayName,
-        photoURL: userCredential.user.photoURL,
+        photoURL: null,
       };
     } catch (error) {
-      const authError = error as AuthError;
-      return rejectWithValue(authError.message);
+      if (error instanceof Error) {
+        return rejectWithValue(error.message);
+      }
+      return rejectWithValue('An unknown error occurred');
     }
   }
 );
@@ -55,35 +63,24 @@ export const loginUser = createAsyncThunk(
   'auth/login',
   async ({ email, password }: { email: string; password: string }, { rejectWithValue }) => {
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      return {
-        uid: userCredential.user.uid,
-        email: userCredential.user.email,
-        displayName: userCredential.user.displayName,
-        photoURL: userCredential.user.photoURL,
-      };
-    } catch (error) {
-      const authError = error as AuthError;
-      return rejectWithValue(authError.message);
-    }
-  }
-);
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
 
-export const signInWithGoogle = createAsyncThunk(
-  'auth/googleSignIn',
-  async (_, { rejectWithValue }) => {
-    try {
-      const provider = new GoogleAuthProvider();
-      const userCredential = await signInWithPopup(auth, provider);
+      if (error) throw error;
+
       return {
-        uid: userCredential.user.uid,
-        email: userCredential.user.email,
-        displayName: userCredential.user.displayName,
-        photoURL: userCredential.user.photoURL,
+        uid: data.user.id,
+        email: data.user.email || null,
+        displayName: data.user.user_metadata?.display_name || null,
+        photoURL: data.user.user_metadata?.photo_url || null,
       };
     } catch (error) {
-      const authError = error as AuthError;
-      return rejectWithValue(authError.message);
+      if (error instanceof AuthError) {
+        return rejectWithValue(error.message);
+      }
+      return rejectWithValue('An unknown error occurred');
     }
   }
 );
@@ -92,10 +89,13 @@ export const signOut = createAsyncThunk(
   'auth/signOut',
   async (_, { rejectWithValue }) => {
     try {
-      await firebaseSignOut(auth);
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
     } catch (error) {
-      const authError = error as AuthError;
-      return rejectWithValue(authError.message);
+      if (error instanceof AuthError) {
+        return rejectWithValue(error.message);
+      }
+      return rejectWithValue('An unknown error occurred');
     }
   }
 );
@@ -136,18 +136,6 @@ const authSlice = createSlice({
         state.user = action.payload;
       })
       .addCase(loginUser.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
-      })
-      .addCase(signInWithGoogle.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(signInWithGoogle.fulfilled, (state, action) => {
-        state.loading = false;
-        state.user = action.payload;
-      })
-      .addCase(signInWithGoogle.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       })

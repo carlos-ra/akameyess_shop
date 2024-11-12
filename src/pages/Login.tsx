@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../hooks/redux';
-import { loginUser, signInWithGoogle } from '../store/slices/authSlice';
+import { loginUser } from '../store/slices/authSlice';
 import './Auth.css';
 
 const Login: React.FC = () => {
@@ -16,17 +16,9 @@ const Login: React.FC = () => {
     try {
       await dispatch(loginUser({ email, password })).unwrap();
       navigate('/');
-    } catch (err) {
+    } catch (error: unknown) {
       // Error is handled by the reducer
-    }
-  };
-
-  const handleGoogleSignIn = async () => {
-    try {
-      await dispatch(signInWithGoogle()).unwrap();
-      navigate('/');
-    } catch (err) {
-      // Error is handled by the reducer
+      console.debug('Login error:', error);
     }
   };
 
@@ -60,13 +52,6 @@ const Login: React.FC = () => {
             {loading ? 'Logging in...' : 'Login'}
           </button>
         </form>
-        <button 
-          onClick={handleGoogleSignIn} 
-          disabled={loading}
-          className="google-button"
-        >
-          Sign in with Google
-        </button>
         <p className="auth-link">
           Don't have an account? <Link to="/register">Register</Link>
         </p>

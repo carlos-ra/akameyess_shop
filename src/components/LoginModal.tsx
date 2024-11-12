@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../hooks/redux';
-import { loginUser, signInWithGoogle, registerUser } from '../store/slices/authSlice';
+import { loginUser, registerUser } from '../store/slices/authSlice';
 import './LoginModal.css';
 
 interface LoginModalProps {
@@ -26,18 +26,9 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onClose, redirectAfterLo
       }
       onClose();
       redirectAfterLogin?.();
-    } catch (err) {
+    } catch (error: unknown) {
       // Error is handled by the reducer
-    }
-  };
-
-  const handleGoogleSignIn = async () => {
-    try {
-      await dispatch(signInWithGoogle()).unwrap();
-      onClose();
-      redirectAfterLogin?.();
-    } catch (err) {
-      // Error is handled by the reducer
+      console.debug('Auth error:', error);
     }
   };
 
@@ -84,13 +75,6 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onClose, redirectAfterLo
             {loading ? (isLogin ? 'Logging in...' : 'Creating account...') : (isLogin ? 'Login' : 'Sign Up')}
           </button>
         </form>
-        <button 
-          onClick={handleGoogleSignIn} 
-          disabled={loading}
-          className="google-button"
-        >
-          Sign in with Google
-        </button>
         <p className="auth-switch">
           {isLogin ? "Don't have an account? " : "Already have an account? "}
           <button 

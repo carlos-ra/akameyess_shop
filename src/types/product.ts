@@ -11,8 +11,6 @@ export interface Product {
   featured: boolean;
   stock: number;
   ali_express_link: string;
-  created_at?: string;
-  updated_at?: string;
 }
 
 export interface ProductsResponse {

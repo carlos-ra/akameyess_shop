@@ -1,45 +1,48 @@
 import { useEffect } from 'react';
 import { useAppDispatch } from '../hooks/redux';
-import { auth } from '../config/firebase';
 import { setUser } from '../store/slices/authSlice';
-import { onAuthStateChanged } from 'firebase/auth';
+import { loadUserCart, clearCart } from '../store/slices/cartSlice';
 import { supabase } from '../config/supabase';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const dispatch = useAppDispatch();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        // Sync user with Supabase
-        const { error } = await supabase
-          .from('users')
-          .upsert({
-            id: user.uid,
-            email: user.email,
-            display_name: user.displayName,
-            photo_url: user.photoURL,
-            updated_at: new Date().toISOString()
-          }, {
-            onConflict: 'id'
-          });
-
-        if (error) {
-          console.error('Error syncing user with Supabase:', error);
-        }
-
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
         dispatch(setUser({
-          uid: user.uid,
-          email: user.email,
-          displayName: user.displayName,
-          photoURL: user.photoURL,
+          uid: session.user.id,
+          email: session.user.email || null,
+          displayName: session.user.user_metadata?.display_name || null,
+          photoURL: session.user.user_metadata?.photo_url || null,
         }));
+        // Load user's cart
+        dispatch(loadUserCart(session.user.id));
       } else {
         dispatch(setUser(null));
+        dispatch(clearCart());
       }
     });
 
-    return () => unsubscribe();
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session?.user) {
+        dispatch(setUser({
+          uid: session.user.id,
+          email: session.user.email || null,
+          displayName: session.user.user_metadata?.display_name || null,
+          photoURL: session.user.user_metadata?.photo_url || null,
+        }));
+        // Load user's cart
+        dispatch(loadUserCart(session.user.id));
+      } else {
+        dispatch(setUser(null));
+        dispatch(clearCart());
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, [dispatch]);
 
   return <>{children}</>;
