@@ -30,7 +30,7 @@ const Layout: React.FC = () => {
       <header>
         <div className="header-content">
           <Link to="/" className="logo">
-            Akameyess Shop
+            Akameyess
           </Link>
           <nav>
             <div className="nav-links">
@@ -53,12 +53,12 @@ const Layout: React.FC = () => {
                     <FaUser /> Login
                   </button>
                 )}
-                <button 
+                {user && <button 
                   onClick={handleOpenCart} 
                   className="nav-link-button"
                 >
                   <FaShoppingCart />
-                </button>
+                </button>}
               </div>
             </div>
             <SearchBar />
