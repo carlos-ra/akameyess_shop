@@ -1,8 +1,12 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { Product } from '../../types/product';
-import { getFeaturedProducts, getProductsByCategory, getProductById } from '../../services/productService';
+import { 
+  getProductById, 
+  getProductsByCategory, 
+  getFeaturedProducts 
+} from '../../services/productService';
 
-interface ProductsState {
+export interface ProductsState {
   featured: Product[];
   beautyProducts: Product[];
   cosplayProducts: Product[];
@@ -21,7 +25,7 @@ const initialState: ProductsState = {
   currentProduct: null,
   loading: false,
   error: null,
-  totalPages: 1,
+  totalPages: 1
 };
 
 export const fetchFeaturedProducts = createAsyncThunk(
@@ -74,7 +78,6 @@ const productsSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // Featured Products
       .addCase(fetchFeaturedProducts.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -87,54 +90,29 @@ const productsSlice = createSlice({
         state.loading = false;
         state.error = action.error.message || 'Failed to fetch featured products';
       })
-      // Category Products
-      .addCase(fetchProductsByCategory.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(fetchProductsByCategory.fulfilled, (state, action) => {
-        state.loading = false;
-        state.categoryProducts = action.payload.products;
-        state.totalPages = action.payload.totalPages;
-      })
-      .addCase(fetchProductsByCategory.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.error.message || 'Failed to fetch category products';
-      })
-      // Single Product
-      .addCase(fetchProductById.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(fetchProductById.fulfilled, (state, action) => {
-        state.loading = false;
-        state.currentProduct = action.payload;
-      })
-      .addCase(fetchProductById.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.error.message || 'Failed to fetch product';
-      })
       .addCase(fetchBeautyProducts.pending, (state) => {
         state.loading = true;
+        state.error = null;
       })
       .addCase(fetchBeautyProducts.fulfilled, (state, action) => {
-        state.beautyProducts = action.payload;
         state.loading = false;
+        state.beautyProducts = action.payload;
       })
       .addCase(fetchBeautyProducts.rejected, (state, action) => {
-        state.error = action.error.message || 'Failed to fetch beauty products';
         state.loading = false;
+        state.error = action.error.message || 'Failed to fetch beauty products';
       })
       .addCase(fetchCosplayProducts.pending, (state) => {
         state.loading = true;
+        state.error = null;
       })
       .addCase(fetchCosplayProducts.fulfilled, (state, action) => {
-        state.cosplayProducts = action.payload;
         state.loading = false;
+        state.cosplayProducts = action.payload;
       })
       .addCase(fetchCosplayProducts.rejected, (state, action) => {
-        state.error = action.error.message || 'Failed to fetch cosplay products';
         state.loading = false;
+        state.error = action.error.message || 'Failed to fetch cosplay products';
       });
   },
 });

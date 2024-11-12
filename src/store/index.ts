@@ -1,16 +1,36 @@
-import { configureStore } from '@reduxjs/toolkit';
-import authReducer from './slices/authSlice';
-import productsReducer from './slices/productsSlice';
-import cartReducer from './slices/cartSlice';
+import { configureStore, ThunkAction, Action } from '@reduxjs/toolkit';
+import authReducer, { AuthState } from './slices/authSlice';
+import cartReducer, { CartState } from './slices/cartSlice';
+import productsReducer, { ProductsState } from './slices/productsSlice';
 
-export const store = configureStore({
-  reducer: {
-    auth: authReducer,
-    products: productsReducer,
-    cart: cartReducer,
-  },
+interface StoreState {
+  auth: AuthState;
+  cart: CartState;
+  products: ProductsState;
+}
+
+const reducer = {
+  auth: authReducer,
+  cart: cartReducer,
+  products: productsReducer,
+};
+
+const store = configureStore({
+  reducer,
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware({
+      serializableCheck: false,
+    }),
 });
 
-// Infer the `RootState` and `AppDispatch` types from the store itself
-export type RootState = ReturnType<typeof store.getState>;
+export type RootState = StoreState;
 export type AppDispatch = typeof store.dispatch;
+
+export type AppThunk<ReturnType = void> = ThunkAction<
+  ReturnType,
+  RootState,
+  unknown,
+  Action<string>
+>;
+
+export { store };

@@ -2,7 +2,7 @@ import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { AuthError } from '@supabase/supabase-js';
 import { supabase } from '../../config/supabase';
 
-interface AuthState {
+export interface AuthState {
   user: {
     uid: string;
     email: string | null;

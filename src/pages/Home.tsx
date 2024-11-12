@@ -11,6 +11,7 @@ import {
   fetchCosplayProducts 
 } from '../store/slices/productsSlice';
 import './Home.css';
+import { Product } from '../types/product';
 
 const Home: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -20,7 +21,7 @@ const Home: React.FC = () => {
     cosplayProducts = [], 
     loading = false, 
     error = null 
-  } = useAppSelector((state) => state.products) || {};
+  } = useAppSelector((state) => state.products);
 
   useEffect(() => {
     dispatch(fetchFeaturedProducts());

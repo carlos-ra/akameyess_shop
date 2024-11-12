@@ -57,5 +57,5 @@ export const searchProducts = async (query: string): Promise<Product[]> => {
     .limit(10);
 
   if (error) throw error;
-  return data as Product;
+  return data as Product[];
 };

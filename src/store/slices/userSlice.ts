@@ -6,9 +6,9 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
   updateProfile,
-  User as FirebaseUser
 } from 'firebase/auth';
 import { auth } from '../../config/firebase';
+import { AppError } from '../../types/error';
 
 interface UserState {
   user: {
@@ -40,11 +40,12 @@ export const registerUser = createAsyncThunk(
       return {
         uid: userCredential.user.uid,
         email: userCredential.user.email,
-        displayName: displayName,
+        displayName,
         photoURL: userCredential.user.photoURL,
       };
-    } catch (error: any) {
-      return rejectWithValue(error.message);
+    } catch (error) {
+      const appError = error as AppError;
+      return rejectWithValue(appError.message || 'An unknown error occurred');
     }
   }
 );
@@ -60,8 +61,9 @@ export const loginUser = createAsyncThunk(
         displayName: userCredential.user.displayName,
         photoURL: userCredential.user.photoURL,
       };
-    } catch (error: any) {
-      return rejectWithValue(error.message);
+    } catch (error) {
+      const appError = error as AppError;
+      return rejectWithValue(appError.message || 'An unknown error occurred');
     }
   }
 );
@@ -89,8 +91,11 @@ export const signOut = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       await firebaseSignOut(auth);
-    } catch (error: any) {
-      return rejectWithValue(error.message);
+    } catch (error) {
+      if (error instanceof Error) {
+        return rejectWithValue(error.message);
+      }
+      return rejectWithValue('An unknown error occurred');
     }
   }
 );

@@ -17,7 +17,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           displayName: session.user.user_metadata?.display_name || null,
           photoURL: session.user.user_metadata?.photo_url || null,
         }));
-        // Load user's cart
         dispatch(loadUserCart(session.user.id));
       } else {
         dispatch(setUser(null));
@@ -26,7 +25,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
         dispatch(setUser({
           uid: session.user.id,
@@ -34,7 +33,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           displayName: session.user.user_metadata?.display_name || null,
           photoURL: session.user.user_metadata?.photo_url || null,
         }));
-        // Load user's cart
         dispatch(loadUserCart(session.user.id));
       } else {
         dispatch(setUser(null));

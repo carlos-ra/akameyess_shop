@@ -19,6 +19,18 @@ interface Order {
   items: OrderItem[];
 }
 
+interface CartItemProduct {
+  id: string;
+  title: string;
+  images: { [key: string]: string };
+}
+
+interface CartItemData {
+  quantity: number;
+  price_at_time: number;
+  products: CartItemProduct;
+}
+
 export const useOrders = (userId?: string) => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -58,9 +70,11 @@ export const useOrders = (userId?: string) => {
 
             if (itemsError) throw itemsError;
 
+            const typedItemsData = (itemsData as unknown) as CartItemData[];
+
             return {
               ...order,
-              items: itemsData.map(item => ({
+              items: typedItemsData.map(item => ({
                 id: item.products.id,
                 title: item.products.title,
                 quantity: item.quantity,

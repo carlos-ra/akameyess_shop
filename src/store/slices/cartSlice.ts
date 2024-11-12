@@ -9,7 +9,7 @@ interface CartItem extends Product {
   price_at_time: number;
 }
 
-interface CartState {
+export interface CartState {
   items: CartItem[];
   total: number;
   isOpen: boolean;
@@ -21,6 +21,26 @@ interface CartResponse {
   orderId: string | null;
   status: CartState['orderStatus'];
   items: CartItem[];
+}
+
+interface CartItemResponse {
+  quantity: number;
+  price_at_time: number;
+  order_id: string;
+  products: {
+    id: string;
+    title: string;
+    description: string;
+    price: number;
+    images: { [key: string]: string };
+    category: 'cosplay' | 'beauty';
+    sub_category: string;
+    rating: number;
+    reviews: number;
+    featured: boolean;
+    stock: number;
+    ali_express_link: string;
+  }
 }
 
 const initialState: CartState = {
@@ -192,17 +212,17 @@ export const loadUserCart = createAsyncThunk<CartResponse, string>(
 
     if (itemsError) throw itemsError;
 
-    const items: CartItem[] = cartItems.map(item => ({
-      ...item.products,
-      quantity: item.quantity,
-      price_at_time: item.price_at_time,
-      order_id: item.order_id
-    }));
+    const typedCartItems = (cartItems as unknown) as CartItemResponse[];
 
     return {
       orderId: order.id,
       status: order.status as CartState['orderStatus'],
-      items
+      items: typedCartItems.map(item => ({
+        ...item.products,
+        quantity: item.quantity,
+        price_at_time: item.price_at_time,
+        order_id: item.order_id
+      }))
     };
   }
 );
