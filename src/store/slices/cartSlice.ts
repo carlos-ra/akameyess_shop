@@ -14,7 +14,7 @@ export interface CartState {
   total: number;
   isOpen: boolean;
   currentOrderId: string | null;
-  orderStatus: 'pending' | 'processing' | 'completed' | 'cancelled' | null;
+  orderStatus: string | null;
 }
 
 interface CartResponse {
@@ -250,21 +250,17 @@ const cartSlice = createSlice({
   name: 'cart',
   initialState,
   reducers: {
-    addToCart: (state, action: PayloadAction<Product>) => {
-      if (state.orderStatus !== 'pending') return;
-      
+    addToCart: (state, action: PayloadAction<CartItem>) => {
       const existingItem = state.items.find(item => item.id === action.payload.id);
       if (existingItem) {
-        existingItem.quantity += 1;
+        existingItem.quantity = action.payload.quantity;
       } else {
-        state.items.push({ 
-          ...action.payload, 
-          quantity: 1,
-          price_at_time: action.payload.price,
-          order_id: state.currentOrderId 
-        });
+        state.items.push(action.payload);
       }
-      state.total = state.items.reduce((sum, item) => sum + item.price_at_time * item.quantity, 0);
+      state.total = state.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    },
+    setCurrentOrder: (state, action: PayloadAction<string>) => {
+      state.currentOrderId = action.payload;
     },
     removeFromCart: (state, action: PayloadAction<string>) => {
       if (state.orderStatus !== 'pending') return;
@@ -312,5 +308,12 @@ const cartSlice = createSlice({
   },
 });
 
-export const { addToCart, removeFromCart, updateQuantity, clearCart, toggleCart } = cartSlice.actions;
+export const { 
+  addToCart, 
+  removeFromCart, 
+  updateQuantity, 
+  clearCart, 
+  toggleCart,
+  setCurrentOrder 
+} = cartSlice.actions;
 export default cartSlice.reducer; 

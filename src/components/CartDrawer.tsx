@@ -113,18 +113,21 @@ export const CartDrawer: React.FC = () => {
 
     try {
       if (newQuantity < 1) {
-        dispatch(removeFromCart(productId));
-        // Delete the cart item
-        await supabase
+        // First update Supabase
+        const { error: deleteError } = await supabase
           .from('cart_items')
           .delete()
           .eq('user_id', user.uid)
           .eq('product_id', productId)
           .eq('order_id', currentOrderId);
+
+        if (deleteError) throw deleteError;
+
+        // Then update Redux state
+        dispatch(removeFromCart(productId));
       } else {
-        dispatch(updateQuantity({ id: productId, quantity: newQuantity }));
-        // Update the cart item
-        await supabase
+        // First update Supabase
+        const { error: updateError } = await supabase
           .from('cart_items')
           .upsert({
             user_id: user.uid,
@@ -133,10 +136,22 @@ export const CartDrawer: React.FC = () => {
             quantity: newQuantity,
             price_at_time: price,
             updated_at: new Date().toISOString()
+          }, {
+            onConflict: 'user_id,product_id,order_id'
           });
+
+        if (updateError) throw updateError;
+
+        // Then update Redux state
+        dispatch(updateQuantity({ 
+          id: productId, 
+          quantity: newQuantity 
+        }));
       }
     } catch (error) {
       console.error('Error updating cart:', error);
+      // Optionally show error to user
+      setError(error instanceof Error ? error.message : 'Failed to update cart');
     }
   };
 
