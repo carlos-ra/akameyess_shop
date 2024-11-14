@@ -43,6 +43,13 @@ interface CartItemResponse {
   }
 }
 
+interface UpdateQuantityPayload {
+  id: string;
+  quantity: number;
+  price_at_time?: number;
+  order_id?: string;
+}
+
 const initialState: CartState = {
   items: [],
   total: 0,
@@ -268,12 +275,18 @@ const cartSlice = createSlice({
       state.items = state.items.filter(item => item.id !== action.payload);
       state.total = state.items.reduce((sum, item) => sum + item.price_at_time * item.quantity, 0);
     },
-    updateQuantity: (state, action: PayloadAction<{ id: string; quantity: number }>) => {
+    updateQuantity: (state, action: PayloadAction<UpdateQuantityPayload>) => {
       if (state.orderStatus !== 'pending') return;
       
       const item = state.items.find(item => item.id === action.payload.id);
       if (item) {
         item.quantity = action.payload.quantity;
+        if (action.payload.price_at_time) {
+          item.price_at_time = action.payload.price_at_time;
+        }
+        if (action.payload.order_id) {
+          item.order_id = action.payload.order_id;
+        }
         state.total = state.items.reduce((sum, item) => sum + item.price_at_time * item.quantity, 0);
       }
     },

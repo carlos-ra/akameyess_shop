@@ -159,7 +159,7 @@ export const CartButton: React.FC<CartButtonProps> = ({ product, className = '' 
 
         if (error) throw error;
 
-        // Then update Redux state
+        // Then update Redux state with proper typing
         dispatch(updateQuantity({ 
           id: product.id, 
           quantity: newQuantity,
