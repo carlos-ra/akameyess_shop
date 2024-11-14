@@ -145,4 +145,50 @@
   .cart-drawer {
     max-width: 100%;
   }
+}
+
+.confirmation-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.confirmation-buttons p {
+  color: var(--text-light);
+  margin-bottom: 0.5rem;
+}
+
+.button-group {
+  display: flex;
+  gap: 1rem;
+}
+
+.confirm-button {
+  flex: 1;
+  padding: 0.8rem;
+  background: var(--success-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.cancel-button {
+  flex: 1;
+  padding: 0.8rem;
+  background: var(--error-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.confirm-button:hover,
+.cancel-button:hover {
+  opacity: 0.9;
+  transform: translateY(-2px);
 } 

@@ -11,20 +11,45 @@ const Orders: React.FC = () => {
   const navigate = useNavigate();
 
   if (!user) {
-    return <div className="orders-container">Please login to view your orders.</div>;
+    return (
+      <div className="orders-container">
+        <div className="no-orders">Please login to view your orders.</div>
+      </div>
+    );
   }
 
-  if (loading) return <LoadingSpinner />;
-  if (error) return <div className="error-message">{error}</div>;
+  if (loading) {
+    return (
+      <div className="orders-container">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="orders-container">
+        <div className="error-message">{error}</div>
+      </div>
+    );
+  }
 
   return (
     <div className="orders-container">
       <h1>My Orders</h1>
-      {orders.length === 0 ? (
-        <p>No orders found.</p>
+      {orders?.length === 0 ? (
+        <div className="no-orders">
+          <p>No orders found.</p>
+          <button 
+            onClick={() => navigate('/')} 
+            className="new-order-button"
+          >
+            Start Shopping
+          </button>
+        </div>
       ) : (
         <div className="orders-list">
-          {orders.map((order) => (
+          {orders?.map((order) => (
             <div key={order.id} className="order-card">
               <div className="order-header">
                 <h3>Order #{order.id.slice(0, 8)}</h3>
@@ -33,9 +58,16 @@ const Orders: React.FC = () => {
                 </span>
               </div>
               <div className="order-items">
-                {order.items.map((item) => (
+                {order.items?.map((item) => (
                   <div key={item.id} className="order-item">
-                    <img src={Object.values(item.images)[0]} alt={item.title} />
+                    <img 
+                      src={Object.values(item.images)[0]} 
+                      alt={item.title}
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = '/placeholder.png'; // Add a placeholder image
+                      }}
+                    />
                     <div className="item-details">
                       <h4>{item.title}</h4>
                       <p>Quantity: {item.quantity}</p>
@@ -51,14 +83,6 @@ const Orders: React.FC = () => {
             </div>
           ))}
         </div>
-      )}
-      {!orders.some(order => order.status === 'pending') && (
-        <button 
-          onClick={() => navigate('/cart')} 
-          className="new-order-button"
-        >
-          Start New Order
-        </button>
       )}
     </div>
   );
