@@ -78,11 +78,12 @@ export const CartDrawer: React.FC = () => {
       const isValid = await validateStockAndUpdateQuantities();
       if (!isValid) return;
 
-      // Update order status to processing
+      // Update order status and total amount to processing
       const { error } = await supabase
         .from('orders')
         .update({ 
           status: 'processing',
+          total_amount: total,
           updated_at: new Date().toISOString()
         })
         .eq('id', currentOrderId);
