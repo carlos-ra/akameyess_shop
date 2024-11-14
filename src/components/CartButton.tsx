@@ -26,6 +26,11 @@ export const CartButton: React.FC<CartButtonProps> = ({ product, className = '' 
 
   const cartItem = items.find(item => item.id === product.id);
 
+  // Check if product is out of stock
+  const isOutOfStock = product.stock <= 0;
+  // Check if adding one more would exceed stock
+  const wouldExceedStock = cartItem && (cartItem.quantity + 1 > product.stock);
+
   const getOrCreateOrder = async (): Promise<string> => {
     try {
       // First try to get an existing pending order
@@ -64,9 +69,21 @@ export const CartButton: React.FC<CartButtonProps> = ({ product, className = '' 
   };
 
   const handleAddToCart = async () => {
+    // Prevent adding if out of stock
+    if (isOutOfStock) {
+      return;
+    }
+
+    // Prevent adding if it would exceed stock
+    if (wouldExceedStock) {
+      return;
+    }
+
     if (!user) {
       setOnLoginSuccess(() => () => {
-        dispatch(addToCart(product));
+        if (!isOutOfStock && !wouldExceedStock) {
+          dispatch(addToCart(product));
+        }
       });
       setShowLoginModal(true);
       return;
@@ -115,6 +132,11 @@ export const CartButton: React.FC<CartButtonProps> = ({ product, className = '' 
   };
 
   const handleUpdateQuantity = async (newQuantity: number) => {
+    // Prevent updating if it would exceed stock
+    if (newQuantity > product.stock) {
+      return;
+    }
+
     if (!user) return;
 
     try {
@@ -166,32 +188,35 @@ export const CartButton: React.FC<CartButtonProps> = ({ product, className = '' 
     }
   };
 
-  return (
-    <>
-      {cartItem ? (
-        <div className="quantity-controls">
-          <button 
-            onClick={() => handleUpdateQuantity(cartItem.quantity - 1)}
-            className="quantity-btn"
-          >
-            -
-          </button>
-          <span className="quantity">{cartItem.quantity}</span>
-          <button 
-            onClick={() => handleUpdateQuantity(cartItem.quantity + 1)}
-            className="quantity-btn"
-          >
-            +
-          </button>
-        </div>
-      ) : (
+  // Show different button states based on stock
+  if (cartItem) {
+    return (
+      <div className="quantity-controls">
         <button 
-          onClick={handleAddToCart}
-          className={`cart-button ${className}`}
+          onClick={() => handleUpdateQuantity(cartItem.quantity - 1)}
+          className="quantity-btn"
         >
-          Add to Cart
+          -
         </button>
-      )}
-    </>
+        <span className="quantity">{cartItem.quantity}</span>
+        <button 
+          onClick={() => handleUpdateQuantity(cartItem.quantity + 1)}
+          className="quantity-btn"
+          disabled={cartItem.quantity >= product.stock}
+        >
+          +
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <button 
+      onClick={handleAddToCart}
+      className={`cart-button ${className} ${isOutOfStock ? 'out-of-stock' : ''}`}
+      disabled={isOutOfStock}
+    >
+      {isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
+    </button>
   );
 };
